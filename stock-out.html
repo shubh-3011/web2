@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stock Out</title>
+    <script src="https://unpkg.com/html5-qrcode"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Stock Out</h1>
+        <div class="button-container">
+            <button class="btn" id="scanBtn">Scan Barcode</button>
+            <button class="btn">Button 2</button>
+        </div>
+        <div id="reader" style="width: 100%"></div>
+        <div id="barcode-result"></div>
+        <a href="index.html" class="back-btn">Back to Home</a>
+    </div>
+
+    <script>
+        const scanBtn = document.getElementById('scanBtn');
+        const reader = document.getElementById('reader');
+        const result = document.getElementById('barcode-result');
+        
+        const html5QrCode = new Html5Qrcode("reader");
+        let isScanning = false;
+
+        async function startScanning() {
+            try {
+                const cameras = await Html5Qrcode.getCameras();
+                if (cameras && cameras.length) {
+                    const camera = cameras[0];
+                    await html5QrCode.start(
+                        camera.id,
+                        {
+                            fps: 10,
+                            qrbox: { width: 250, height: 100 },
+                            formatsToSupport: [
+                                Html5QrcodeSupportedFormats.EAN_13,
+                                Html5QrcodeSupportedFormats.EAN_8,
+                                Html5QrcodeSupportedFormats.CODE_39,
+                                Html5QrcodeSupportedFormats.CODE_93,
+                                Html5QrcodeSupportedFormats.CODE_128,
+                                Html5QrcodeSupportedFormats.UPC_A,
+                                Html5QrcodeSupportedFormats.UPC_E
+                            ]
+                        },
+                        (decodedText) => {
+                            result.style.display = 'block';
+                            result.innerHTML = `Barcode detected: ${decodedText}`;
+                            stopScanning();
+                        },
+                        (error) => {
+                            // Ignore errors during scanning
+                        }
+                    );
+                    isScanning = true;
+                    scanBtn.textContent = 'Stop Scanning';
+                }
+            } catch (err) {
+                alert('Error accessing camera: ' + err);
+            }
+        }
+
+        async function stopScanning() {
+            if (isScanning) {
+                await html5QrCode.stop();
+                isScanning = false;
+                scanBtn.textContent = 'Scan Barcode';
+            }
+        }
+
+        scanBtn.addEventListener('click', async () => {
+            if (!isScanning) {
+                result.style.display = 'none';
+                await startScanning();
+            } else {
+                await stopScanning();
+            }
+        });
+    </script>
+</body>
+</html>
